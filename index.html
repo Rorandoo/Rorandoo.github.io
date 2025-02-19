@@ -40,7 +40,7 @@
 </head>
 <body>
     <div id="map"></div>
-    <div id="coordinates">Lat: 0.00000, Lng: 0.00000</div>
+    <div id="coordinates">Lat: 0, Lng: 0</div>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         var map = L.map('map').setView([0, 0], 2);
@@ -82,7 +82,9 @@
         // Update coordinates counter
         var coordinatesDiv = document.getElementById('coordinates');
         map.on('mousemove', function(e) {
-            coordinatesDiv.innerHTML = 'Lat: ' + e.latlng.lat.toFixed(5) + ', Lng: ' + e.latlng.lng.toFixed(5);
+            var lat = Math.floor(e.latlng.lat);
+            var lng = Math.floor(e.latlng.lng);
+            coordinatesDiv.innerHTML = 'Lat: ' + lat + ', Lng: ' + lng;
         });
     </script>
 </body>
