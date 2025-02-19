@@ -68,16 +68,27 @@
             position: absolute;
             background: rgba(51, 51, 51, 0.9);
             color: white;
-            padding: 5px; /* Reduced padding */
+            padding: 10px;
             border-radius: 5px;
             z-index: 1000;
             display: none; /* Initially hidden */
+            width: 200px; /* Set a fixed width to control the size */
         }
-        #marker-selection label {
-            margin-right: 10px;
+        #marker-selection label, #marker-selection select, #marker-selection button {
+            display: block;
+            margin-bottom: 10px;
+            width: 100%; /* Make the elements take full width */
         }
         .remove-marker-btn {
             background: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .cancel-marker-btn {
+            background: #999;
             color: white;
             border: none;
             padding: 5px 10px;
@@ -137,7 +148,10 @@
             <option value="grey">Grey</option>
             <option value="black">Black</option>
         </select>
-        <button id="add-marker-btn">Add Marker</button>
+        <div>
+            <button id="add-marker-btn">Add Marker</button>
+            <button id="cancel-marker-btn" class="cancel-marker-btn">Cancel</button>
+        </div>
     </div>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
@@ -290,11 +304,10 @@
             }
             tempMarker = L.marker(selectedLatLng).addTo(map);
 
-            // Adjust popup position to be to the left of the marker
+            // Adjust popup position to be centered above the marker
             var markerPos = map.latLngToContainerPoint(selectedLatLng);
-            var popupOffset = -75; // reduce offset in pixels to move the popup to the left
-            markerSelectionDiv.style.left = (markerPos.x + popupOffset) + 'px';
-            markerSelectionDiv.style.top = (markerPos.y - markerSelectionDiv.offsetHeight / 2) + 'px';
+            markerSelectionDiv.style.left = (markerPos.x - markerSelectionDiv.offsetWidth / 2) + 'px';
+            markerSelectionDiv.style.top = (markerPos.y - markerSelectionDiv.offsetHeight - 10) + 'px';
         });
 
         document.getElementById('add-marker-btn').addEventListener('click', function() {
@@ -304,6 +317,13 @@
                 document.getElementById('marker-selection').style.display = 'none';
                 map.removeLayer(tempMarker); // Remove temporary marker
             }
+        });
+
+        document.getElementById('cancel-marker-btn').addEventListener('click', function() {
+            if (tempMarker) {
+                map.removeLayer(tempMarker);
+            }
+            document.getElementById('marker-selection').style.display = 'none';
         });
 
         window.removeMarker = function(markerId) {
