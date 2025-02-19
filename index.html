@@ -17,9 +17,11 @@
             width: 100%;
             background-color: black; /* Ensure the map container also has a black background */
         }
-        .grid-line {
-            stroke: #ff0000; /* Grid line color */
-            stroke-width: 1; /* Grid line width */
+        .grid-tile {
+            outline: 1px solid #000000; /* Grid line color */
+            box-sizing: border-box;
+            width: 256px;
+            height: 256px;
         }
     </style>
 </head>
@@ -49,41 +51,19 @@
                 .openPopup();
         });
 
+        // Create a new pane for the grid layer
+        map.createPane('gridPane');
+        map.getPane('gridPane').style.zIndex = 650; // Ensure the grid is above the overlay (default zIndex for overlayPane is 400)
+
         // Add grid overlay
-        var gridLayer = L.gridLayer({
-            tileSize: 256,
-            updateWhenIdle: false,
-            updateWhenZooming: false,
-            updateInterval: 200
-        }).createTile = function(coords) {
-            var tile = L.DomUtil.create('svg', 'leaflet-tile');
-            tile.setAttribute('width', 256);
-            tile.setAttribute('height', 256);
-
-            var ns = 'http://www.w3.org/2000/svg';
-            var line;
-            for (var i = 0; i <= 256; i += 32) {
-                line = document.createElementNS(ns, 'line');
-                line.setAttribute('x1', i);
-                line.setAttribute('y1', 0);
-                line.setAttribute('x2', i);
-                line.setAttribute('y2', 256);
-                line.setAttribute('class', 'grid-line');
-                tile.appendChild(line);
-
-                line = document.createElementNS(ns, 'line');
-                line.setAttribute('x1', 0);
-                line.setAttribute('y1', i);
-                line.setAttribute('x2', 256);
-                line.setAttribute('y2', i);
-                line.setAttribute('class', 'grid-line');
-                tile.appendChild(line);
+        var gridLayer = L.GridLayer.extend({
+            createTile: function (coords) {
+                var tile = L.DomUtil.create('div', 'grid-tile');
+                return tile;
             }
+        });
 
-            return tile;
-        };
-
-        gridLayer.addTo(map);
+        map.addLayer(new gridLayer({ pane: 'gridPane' }));
     </script>
 </body>
 </html>
