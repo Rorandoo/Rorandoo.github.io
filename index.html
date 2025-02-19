@@ -25,10 +25,18 @@
         // Add the image overlay to the map
         L.imageOverlay(imageUrl, imageBounds).addTo(map);
 
-        // Optional: Add markers or other features
-        var marker = L.marker([0, 0]).addTo(map)
-            .bindPopup('Sug kuk golfare <br> Swing some dix')
-            .openPopup();
+        // Add markers
+        var markers = [
+            {lat: 0, lng: 0, popup: 'Marker at (0, 0)'},
+            {lat: 10, lng: 10, popup: 'Marker at (10, 10)'},
+            {lat: -10, lng: -10, popup: 'Marker at (-10, -10)'}
+        ];
+
+        markers.forEach(function(marker) {
+            L.marker([marker.lat, marker.lng]).addTo(map)
+                .bindPopup(marker.popup)
+                .openPopup();
+        });
     </script>
 </body>
 </html>
