@@ -53,6 +53,10 @@
             display: flex;
             align-items: center;
             margin-bottom: 10px;
+            cursor: pointer;
+        }
+        .legend-item.hidden {
+            opacity: 0.5;
         }
         .legend-icon {
             width: 25px;
@@ -86,35 +90,35 @@
     <div id="sidebar">
         <h2>Legacy: Steel & Sorcery</h2>
         <h3>Greenwood</h3>
-        <div class="legend-item">
+        <div class="legend-item" data-type="red">
             <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png');"></div>
             <span>Loot Container</span>
         </div>
-        <div class="legend-item">
+        <div class="legend-item" data-type="blue">
             <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png');"></div>
             <span>Ore - Copper/Iron/Bloodsteel</span>
         </div>
-        <div class="legend-item">
+        <div class="legend-item" data-type="green">
             <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png');"></div>
             <span>Tree - Birch/Oak/Maple</span>
         </div>
-        <div class="legend-item">
+        <div class="legend-item" data-type="yellow">
             <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png');"></div>
             <span>Yellow</span>
         </div>
-        <div class="legend-item">
+        <div class="legend-item" data-type="orange">
             <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png');"></div>
             <span>Orange</span>
         </div>
-        <div class="legend-item">
+        <div class="legend-item" data-type="violet">
             <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png');"></div>
             <span>Violet</span>
         </div>
-        <div class="legend-item">
+        <div class="legend-item" data-type="grey">
             <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-grey.png');"></div>
             <span>Grey</span>
         </div>
-        <div class="legend-item">
+        <div class="legend-item" data-type="black">
             <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-black.png');"></div>
             <span>Black</span>
         </div>
@@ -137,7 +141,9 @@
     </div>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        var map = L.map('map').setView([0, 0], 2);
+        var map = L.map('map', {
+            doubleClickZoom: false // Disable double-click zoom
+        }).setView([0, 0], 2);
         var markers = JSON.parse(localStorage.getItem('markers')) || [];
 
         // Define the geographical bounds of the image
@@ -270,10 +276,10 @@
             coordinatesDiv.innerHTML = 'Lat: ' + lat + ', Lng: ' + lng;
         });
 
-        // Add marker on map click
+        // Add marker on map double click
         var selectedLatLng;
         var tempMarker;
-        map.on('click', function(e) {
+        map.on('dblclick', function(e) {
             selectedLatLng = e.latlng;
             var markerSelectionDiv = document.getElementById('marker-selection');
             markerSelectionDiv.style.display = 'block';
@@ -315,6 +321,20 @@
                 map.removeLayer(marker);
             }
         };
+
+        // Toggle marker visibility on legend item click
+        document.querySelectorAll('.legend-item').forEach(function(item) {
+            item.addEventListener('click', function() {
+                var type = this.getAttribute('data-type');
+                if (map.hasLayer(markerGroups[type])) {
+                    map.removeLayer(markerGroups[type]);
+                    this.classList.add('hidden');
+                } else {
+                    markerGroups[type].addTo(map);
+                    this.classList.remove('hidden');
+                }
+            });
+        });
     </script>
 </body>
 </html>
