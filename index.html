@@ -64,18 +64,39 @@
 </head>
 <body>
     <div id="sidebar">
-        <h2>Legend</h2>
+        <h2>Legacy: Steel & Sorcery</h2>
+        <h3>Greenwood</h3>
         <div class="legend-item">
             <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png');"></div>
-            <span>Red Marker - Important Location</span>
+            <span>Loot Container </span>
         </div>
         <div class="legend-item">
             <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png');"></div>
-            <span>Blue Marker - Secondary Location</span>
+            <span>Ore - Copper/Iron/Bloodsteel</span>
         </div>
         <div class="legend-item">
             <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png');"></div>
-            <span>Green Marker - Additional Location</span>
+            <span>Tree - Birch/Oak/Maple</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png');"></div>
+            <span>Yellow</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png');"></div>
+            <span>Orange</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png');"></div>
+            <span>Violet</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-grey.png');"></div>
+            <span>Grey</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-black.png');"></div>
+            <span>Black</span>
         </div>
     </div>
     <div id="map"></div>
@@ -119,20 +140,80 @@
             shadowSize: [41, 41]
         });
 
+        var yellowIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        var orangeIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        var violetIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        var greyIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-grey.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        var blackIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-black.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
         // Create marker groups
         var redMarkers = L.layerGroup();
         var blueMarkers = L.layerGroup();
         var greenMarkers = L.layerGroup();
+        var yellowMarkers = L.layerGroup();
+        var orangeMarkers = L.layerGroup();
+        var violetMarkers = L.layerGroup();
+        var greyMarkers = L.layerGroup();
+        var blackMarkers = L.layerGroup();
 
         // Add markers to their respective groups
-        L.marker([0, 0], {icon: redIcon}).bindPopup('Red marker at (0, 0)').addTo(redMarkers);
-        L.marker([10, 10], {icon: blueIcon}).bindPopup('Blue marker at (10, 10)').addTo(blueMarkers);
-        L.marker([-10, -10], {icon: greenIcon}).bindPopup('Green marker at (-10, -10)').addTo(greenMarkers);
+        L.marker([0, 0], {icon: redIcon}).bindPopup('Loot container').addTo(redMarkers);
+        L.marker([10, 10], {icon: blueIcon}).bindPopup('Ore').addTo(blueMarkers);
+        L.marker([-10, -10], {icon: greenIcon}).bindPopup('Tree').addTo(greenMarkers);
+        L.marker([-50, -10], {icon: yellowIcon}).bindPopup('Yellow').addTo(yellowMarkers);
+        L.marker([-20, 20], {icon: orangeIcon}).bindPopup('Orange').addTo(orangeMarkers);
+        L.marker([-40, 30], {icon: violetIcon}).bindPopup('Violet').addTo(violetMarkers);
+        L.marker([50, -20], {icon: greyIcon}).bindPopup('Grey').addTo(greyMarkers);
+        L.marker([60, 20], {icon: blackIcon}).bindPopup('Black').addTo(blackMarkers);
 
         // Add the groups to the map
         redMarkers.addTo(map);
         blueMarkers.addTo(map);
         greenMarkers.addTo(map);
+        yellowMarkers.addTo(map);
+        orangeMarkers.addTo(map);
+        violetMarkers.addTo(map);
+        greyMarkers.addTo(map);
+        blackMarkers.addTo(map);
 
         // Create a new pane for the grid layer
         map.createPane('gridPane');
