@@ -17,6 +17,10 @@
             width: 100%;
             background-color: black; /* Ensure the map container also has a black background */
         }
+        .grid-line {
+            stroke: #ff0000; /* Grid line color */
+            stroke-width: 1; /* Grid line width */
+        }
     </style>
 </head>
 <body>
@@ -44,6 +48,42 @@
                 .bindPopup(marker.popup)
                 .openPopup();
         });
+
+        // Add grid overlay
+        var gridLayer = L.gridLayer({
+            tileSize: 256,
+            updateWhenIdle: false,
+            updateWhenZooming: false,
+            updateInterval: 200
+        }).createTile = function(coords) {
+            var tile = L.DomUtil.create('svg', 'leaflet-tile');
+            tile.setAttribute('width', 256);
+            tile.setAttribute('height', 256);
+
+            var ns = 'http://www.w3.org/2000/svg';
+            var line;
+            for (var i = 0; i <= 256; i += 32) {
+                line = document.createElementNS(ns, 'line');
+                line.setAttribute('x1', i);
+                line.setAttribute('y1', 0);
+                line.setAttribute('x2', i);
+                line.setAttribute('y2', 256);
+                line.setAttribute('class', 'grid-line');
+                tile.appendChild(line);
+
+                line = document.createElementNS(ns, 'line');
+                line.setAttribute('x1', 0);
+                line.setAttribute('y1', i);
+                line.setAttribute('x2', 256);
+                line.setAttribute('y2', i);
+                line.setAttribute('class', 'grid-line');
+                tile.appendChild(line);
+            }
+
+            return tile;
+        };
+
+        gridLayer.addTo(map);
     </script>
 </body>
 </html>
