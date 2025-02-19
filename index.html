@@ -88,7 +88,7 @@
         <h3>Greenwood</h3>
         <div class="legend-item">
             <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png');"></div>
-            <span>Loot Container </span>
+            <span>Loot Container</span>
         </div>
         <div class="legend-item">
             <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png');"></div>
@@ -138,6 +138,7 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         var map = L.map('map').setView([0, 0], 2);
+        var markers = JSON.parse(localStorage.getItem('markers')) || [];
 
         // Define the geographical bounds of the image
         var imageUrl = 'https://Rorandoo.github.io/Maps/Legacymap1.jpg';
@@ -226,21 +227,21 @@
             black: L.layerGroup()
         };
 
-        // Add markers to their respective groups
-        function addMarker(lat, lng, icon, group, popupText) {
+        // Function to add a marker and save it to local storage
+        function addMarker(lat, lng, icon, group, type) {
             var marker = L.marker([lat, lng], {icon: icon}).addTo(group);
-            marker.bindPopup('<b>' + popupText + '</b><br><button class="remove-marker-btn" onclick="removeMarker(' + marker._leaflet_id + ')">Remove Marker</button>');
+            marker.bindPopup('<b>' + type.charAt(0).toUpperCase() + type.slice(1) + '</b><br><button class="remove-marker-btn" onclick="removeMarker(' + marker._leaflet_id + ')">Remove Marker</button>');
+
+            // Save marker data to local storage
+            markers.push({ lat: lat, lng: lng, type: type });
+            localStorage.setItem('markers', JSON.stringify(markers));
             return marker;
         }
 
-        addMarker(0, 0, icons.red, markerGroups.red, 'Loot container');
-        addMarker(10, 10, icons.blue, markerGroups.blue, 'Ore');
-        addMarker(-10, -10, icons.green, markerGroups.green, 'Tree');
-        addMarker(-50, -10, icons.yellow, markerGroups.yellow, 'Yellow');
-        addMarker(-20, 20, icons.orange, markerGroups.orange, 'Orange');
-        addMarker(-40, 30, icons.violet, markerGroups.violet, 'Violet');
-        addMarker(50, -20, icons.grey, markerGroups.grey, 'Grey');
-        addMarker(60, 20, icons.black, markerGroups.black, 'Black');
+        // Load markers from local storage
+        markers.forEach(function(markerData) {
+            addMarker(markerData.lat, markerData.lng, icons[markerData.type], markerGroups[markerData.type], markerData.type);
+        });
 
         // Add the groups to the map
         for (var key in markerGroups) {
@@ -285,7 +286,7 @@
 
             // Adjust popup position to be to the left of the marker
             var markerPos = map.latLngToContainerPoint(selectedLatLng);
-            var popupOffset = -40; // reduce offset in pixels to move the popup to the left
+            var popupOffset = -75; // reduce offset in pixels to move the popup to the left
             markerSelectionDiv.style.left = (markerPos.x + popupOffset) + 'px';
             markerSelectionDiv.style.top = (markerPos.y - markerSelectionDiv.offsetHeight / 2) + 'px';
         });
@@ -293,7 +294,7 @@
         document.getElementById('add-marker-btn').addEventListener('click', function() {
             var markerType = document.getElementById('marker-type').value;
             if (selectedLatLng && icons[markerType]) {
-                addMarker(selectedLatLng.lat, selectedLatLng.lng, icons[markerType], markerGroups[markerType], markerType.charAt(0).toUpperCase() + markerType.slice(1));
+                addMarker(selectedLatLng.lat, selectedLatLng.lng, icons[markerType], markerGroups[markerType], markerType);
                 document.getElementById('marker-selection').style.display = 'none';
                 map.removeLayer(tempMarker); // Remove temporary marker
             }
@@ -302,6 +303,15 @@
         window.removeMarker = function(markerId) {
             var marker = map._layers[markerId];
             if (marker) {
+                var lat = marker.getLatLng().lat;
+                var lng = marker.getLatLng().lng;
+
+                // Remove marker from local storage
+                markers = markers.filter(function(m) {
+                    return m.lat !== lat || m.lng !== lng;
+                });
+                localStorage.setItem('markers', JSON.stringify(markers));
+
                 map.removeLayer(marker);
             }
         };
