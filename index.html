@@ -318,7 +318,13 @@
                 });
                 localStorage.setItem('markers', JSON.stringify(markers));
 
+                // Remove marker from map
                 map.removeLayer(marker);
+
+                // Check if marker was successfully removed, if not, remove it again
+                if (map.hasLayer(marker)) {
+                    map.removeLayer(marker);
+                }
             }
         };
 
