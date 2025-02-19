@@ -9,7 +9,7 @@
         html, body {
             height: 100%;
             margin: 0;
-            background-color: black; /* Set page background color to black */
+            background-color: black;
         }
         #sidebar {
             position: fixed;
@@ -26,12 +26,12 @@
         }
         #map {
             height: 100%;
-            width: calc(100% - 300px); /* Adjust width to account for sidebar */
-            margin-left: 300px; /* Offset the map to the right of the sidebar */
-            background-color: black; /* Ensure the map container also has a black background */
+            width: calc(100% - 300px);
+            margin-left: 300px;
+            background-color: black;
         }
         .grid-tile {
-            outline: 1px solid #000000; /* Grid line color */
+            outline: 1px solid #000000;
             box-sizing: border-box;
             width: 256px;
             height: 256px;
@@ -39,15 +39,15 @@
         #coordinates {
             position: absolute;
             bottom: 10px;
-            left: 320px; /* Adjust position to the right of the sidebar */
+            left: 320px;
             padding: 5px 10px;
-            background: rgba(0, 0, 0, 0.8); /* Darker background for better visibility */
+            background: rgba(0, 0, 0, 0.8);
             color: #fff;
             font-family: Arial, sans-serif;
-            font-size: 16px; /* Increased font size for better readability */
+            font-size: 16px;
             border-radius: 3px;
-            z-index: 1000; /* Ensure it is above other elements */
-            pointer-events: none; /* Ensure it doesn't block map interactions */
+            z-index: 1000;
+            pointer-events: none;
         }
         .legend-item {
             display: flex;
@@ -71,13 +71,13 @@
             padding: 10px;
             border-radius: 5px;
             z-index: 1000;
-            display: none; /* Initially hidden */
-            width: 200px; /* Set a fixed width to control the size */
+            display: none;
+            width: 200px;
         }
         #marker-selection label, #marker-selection select, #marker-selection button {
             display: block;
             margin-bottom: 10px;
-            width: 100%; /* Make the elements take full width */
+            width: 100%;
         }
         .remove-marker-btn {
             background: #ff4d4d;
@@ -101,53 +101,12 @@
     <div id="sidebar">
         <h2>Legacy: Steel & Sorcery</h2>
         <h3>Greenwood</h3>
-        <div class="legend-item" data-type="red">
-            <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png');"></div>
-            <span>Loot Container</span>
-        </div>
-        <div class="legend-item" data-type="blue">
-            <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png');"></div>
-            <span>Ore - Copper/Iron/Bloodsteel</span>
-        </div>
-        <div class="legend-item" data-type="green">
-            <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png');"></div>
-            <span>Tree - Birch/Oak/Maple</span>
-        </div>
-        <div class="legend-item" data-type="yellow">
-            <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png');"></div>
-            <span>Yellow</span>
-        </div>
-        <div class="legend-item" data-type="orange">
-            <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png');"></div>
-            <span>Orange</span>
-        </div>
-        <div class="legend-item" data-type="violet">
-            <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png');"></div>
-            <span>Violet</span>
-        </div>
-        <div class="legend-item" data-type="grey">
-            <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-grey.png');"></div>
-            <span>Grey</span>
-        </div>
-        <div class="legend-item" data-type="black">
-            <div class="legend-icon" style="background-image: url('https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-black.png');"></div>
-            <span>Black</span>
-        </div>
     </div>
     <div id="map"></div>
     <div id="coordinates">Lat: 0, Lng: 0</div>
     <div id="marker-selection">
         <label for="marker-type">Select Marker:</label>
-        <select id="marker-type">
-            <option value="red">Loot Container</option>
-            <option value="blue">Ore</option>
-            <option value="green">Tree</option>
-            <option value="yellow">Yellow</option>
-            <option value="orange">Orange</option>
-            <option value="violet">Violet</option>
-            <option value="grey">Grey</option>
-            <option value="black">Black</option>
-        </select>
+        <select id="marker-type"></select>
         <div>
             <button id="add-marker-btn">Add Marker</button>
             <button id="cancel-marker-btn" class="cancel-marker-btn">Cancel</button>
@@ -156,130 +115,119 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         var map = L.map('map', {
-            doubleClickZoom: false // Disable double-click zoom
+            doubleClickZoom: false
         }).setView([0, 0], 2);
+
         var markers = JSON.parse(localStorage.getItem('markers')) || [];
 
-        // Define the geographical bounds of the image
         var imageUrl = 'https://Rorandoo.github.io/Maps/Legacymap1.jpg';
-        var imageBounds = [[-90, -180], [90, 180]]; // Adjust these coordinates based on your map's coverage
-
-        // Add the image overlay to the map
+        var imageBounds = [[-90, -180], [90, 180]];
         L.imageOverlay(imageUrl, imageBounds).addTo(map);
 
-        // Define custom icons with different colors
-        var icons = {
-            red: L.icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-            }),
-            blue: L.icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-            }),
-            green: L.icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-            }),
-            yellow: L.icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-yellow.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-            }),
-            orange: L.icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-            }),
-            violet: L.icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-            }),
-            grey: L.icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-grey.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-            }),
-            black: L.icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-black.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-            })
-        };
+        // Marker Factory Function
+        function createMarker(type, color, description) {
+            return {
+                icon: L.icon({
+                    iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                }),
+                group: new L.LayerGroup(),
+                description: description,
+                type: type
+            };
+        }
 
-        // Create marker groups
-        var markerGroups = {
-            red: L.layerGroup(),
-            blue: L.layerGroup(),
-            green: L.layerGroup(),
-            yellow: L.layerGroup(),
-            orange: L.layerGroup(),
-            violet: L.layerGroup(),
-            grey: L.layerGroup(),
-            black: L.layerGroup()
-        };
+        // Marker Configuration
+        var markersConfig = [
+            createMarker("red", "red", "Loot Container"),
+            createMarker("blue", "blue", "Ore - Copper/Iron/Bloodsteel"),
+            createMarker("green", "green", "Tree - Birch/Oak/Maple"),
+            createMarker("yellow", "yellow", "Yellow"),
+            createMarker("orange", "orange", "Orange"),
+            createMarker("violet", "violet", "Violet"),
+            createMarker("grey", "grey", "Grey"),
+            createMarker("black", "black", "Black")
+        ];
 
-        // Function to add a marker and save it to local storage
-        function addMarker(lat, lng, icon, group, type) {
-            var marker = L.marker([lat, lng], {icon: icon}).addTo(group);
-            marker.bindPopup('<b>' + type.charAt(0).toUpperCase() + type.slice(1) + '</b><br><button class="remove-marker-btn" onclick="removeMarker(' + marker._leaflet_id + ')">Remove Marker</button>');
+        // Initialize Marker Groups
+        var markerGroups = {};
+        markersConfig.forEach(marker => {
+            markerGroups[marker.type] = marker.group;
+            marker.group.addTo(map);
+        });
 
-            // Save marker data to local storage
-            markers.push({ lat: lat, lng: lng, type: type });
+        // Function to add a marker
+        function addMarker(lat, lng, markerConfig) {
+            var marker = L.marker([lat, lng], {icon: markerConfig.icon}).addTo(map);
+            marker.bindPopup('<b>' + markerConfig.description + '</b><br><button class="remove-marker-btn" onclick="removeMarker(' + marker._leaflet_id + ')">Remove Marker</button>');
+
+            markerConfig.group.addLayer(marker);
+
+            markers.push({ lat: lat, lng: lng, type: markerConfig.type });
             localStorage.setItem('markers', JSON.stringify(markers));
             return marker;
         }
 
-        // Load markers from local storage
-        markers.forEach(function(markerData) {
-            addMarker(markerData.lat, markerData.lng, icons[markerData.type], markerGroups[markerData.type], markerData.type);
-        });
-
-        // Add the groups to the map
-        for (var key in markerGroups) {
-            markerGroups[key].addTo(map);
+        // Generate Legend
+        function generateLegend() {
+            var legendContainer = document.getElementById('sidebar');
+            markersConfig.forEach(marker => {
+                var item = document.createElement('div');
+                item.className = 'legend-item';
+                item.setAttribute('data-type', marker.type);
+                item.innerHTML = `
+                    <div class="legend-icon" style="background-image: url('${marker.icon.options.iconUrl}');"></div>
+                    <span>${marker.description}</span>
+                `;
+                item.addEventListener('click', function() {
+                    toggleMarkerVisibility(marker.type);
+                });
+                legendContainer.appendChild(item);
+            });
         }
 
-        // Create a new pane for the grid layer
-        map.createPane('gridPane');
-        map.getPane('gridPane').style.zIndex = 650; // Ensure the grid is above the overlay (default zIndex for overlayPane is 400)
+        function toggleMarkerVisibility(type) {
+            if (map.hasLayer(markerGroups[type])) {
+                map.removeLayer(markerGroups[type]);
+                document.querySelector(`.legend-item[data-type="${type}"]`).classList.add('hidden');
+            } else {
+                markerGroups[type].addTo(map);
+                document.querySelector(`.legend-item[data-type="${type}"]`).classList.remove('hidden');
+            }
+        }
 
-        // Add grid overlay
+        // Populate Marker Selection Dropdown
+        function populateMarkerSelection() {
+            var select = document.getElementById('marker-type');
+            markersConfig.forEach(marker => {
+                var option = document.createElement('option');
+                option.value = marker.type;
+                option.textContent = marker.description;
+                select.appendChild(option);
+            });
+        }
+
+        // Load markers from local storage
+        markers.forEach(function(markerData) {
+            var markerConfig = markersConfig.find(m => m.type === markerData.type);
+            if (markerConfig) {
+                addMarker(markerData.lat, markerData.lng, markerConfig);
+            }
+        });
+
+        // Create grid overlay
+        map.createPane('gridPane');
+        map.getPane('gridPane').style.zIndex = 650;
         var gridLayer = L.GridLayer.extend({
             createTile: function (coords) {
                 var tile = L.DomUtil.create('div', 'grid-tile');
                 return tile;
             }
         });
-
         map.addLayer(new gridLayer({ pane: 'gridPane' }));
 
         // Update coordinates counter
@@ -290,21 +238,19 @@
             coordinatesDiv.innerHTML = 'Lat: ' + lat + ', Lng: ' + lng;
         });
 
-        // Add marker on map double click
         var selectedLatLng;
         var tempMarker;
+
         map.on('dblclick', function(e) {
             selectedLatLng = e.latlng;
             var markerSelectionDiv = document.getElementById('marker-selection');
             markerSelectionDiv.style.display = 'block';
 
-            // Add temporary marker at clicked location
             if (tempMarker) {
                 map.removeLayer(tempMarker);
             }
             tempMarker = L.marker(selectedLatLng).addTo(map);
 
-            // Adjust popup position to be centered above the marker
             var markerPos = map.latLngToContainerPoint(selectedLatLng);
             markerSelectionDiv.style.left = (markerPos.x - markerSelectionDiv.offsetWidth / 2) + 'px';
             markerSelectionDiv.style.top = (markerPos.y - markerSelectionDiv.offsetHeight - 10) + 'px';
@@ -312,10 +258,11 @@
 
         document.getElementById('add-marker-btn').addEventListener('click', function() {
             var markerType = document.getElementById('marker-type').value;
-            if (selectedLatLng && icons[markerType]) {
-                addMarker(selectedLatLng.lat, selectedLatLng.lng, icons[markerType], markerGroups[markerType], markerType);
+            var selectedMarker = markersConfig.find(m => m.type === markerType);
+            if (selectedLatLng && selectedMarker) {
+                addMarker(selectedLatLng.lat, selectedLatLng.lng, selectedMarker);
                 document.getElementById('marker-selection').style.display = 'none';
-                map.removeLayer(tempMarker); // Remove temporary marker
+                if (tempMarker) map.removeLayer(tempMarker);
             }
         });
 
@@ -332,35 +279,17 @@
                 var lat = marker.getLatLng().lat;
                 var lng = marker.getLatLng().lng;
 
-                // Remove marker from local storage
                 markers = markers.filter(function(m) {
                     return m.lat !== lat || m.lng !== lng;
                 });
                 localStorage.setItem('markers', JSON.stringify(markers));
 
-                // Remove marker from map
                 map.removeLayer(marker);
-
-                // Check if marker was successfully removed, if not, remove it again
-                if (map.hasLayer(marker)) {
-                    map.removeLayer(marker);
-                }
             }
         };
 
-        // Toggle marker visibility on legend item click
-        document.querySelectorAll('.legend-item').forEach(function(item) {
-            item.addEventListener('click', function() {
-                var type = this.getAttribute('data-type');
-                if (map.hasLayer(markerGroups[type])) {
-                    map.removeLayer(markerGroups[type]);
-                    this.classList.add('hidden');
-                } else {
-                    markerGroups[type].addTo(map);
-                    this.classList.remove('hidden');
-                }
-            });
-        });
+        generateLegend();
+        populateMarkerSelection();
     </script>
 </body>
 </html>
