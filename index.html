@@ -23,10 +23,24 @@
             width: 256px;
             height: 256px;
         }
+        #coordinates {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.8); /* Darker background for better visibility */
+            color: #fff;
+            font-family: Arial, sans-serif;
+            font-size: 16px; /* Increased font size for better readability */
+            border-radius: 3px;
+            z-index: 1000; /* Ensure it is above other elements */
+            pointer-events: none; /* Ensure it doesn't block map interactions */
+        }
     </style>
 </head>
 <body>
     <div id="map"></div>
+    <div id="coordinates">Lat: 0.00000, Lng: 0.00000</div>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
         var map = L.map('map').setView([0, 0], 2);
@@ -64,6 +78,12 @@
         });
 
         map.addLayer(new gridLayer({ pane: 'gridPane' }));
+
+        // Update coordinates counter
+        var coordinatesDiv = document.getElementById('coordinates');
+        map.on('mousemove', function(e) {
+            coordinatesDiv.innerHTML = 'Lat: ' + e.latlng.lat.toFixed(5) + ', Lng: ' + e.latlng.lng.toFixed(5);
+        });
     </script>
 </body>
 </html>
