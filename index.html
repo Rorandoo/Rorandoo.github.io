@@ -188,7 +188,7 @@
         initialRequest.onsuccess = function(event) {
             db = event.target.result;
             if (!currentProfile && db.objectStoreNames.length > 0) {
-                currentProfile = db.objectStoreNames[0];
+                currentProfile = Array.from(db.objectStoreNames).find(name => !name.endsWith('_descriptions')) || null;
             }
             if (!currentProfile) {
                 currentProfile = promptForProfileName();
@@ -376,6 +376,12 @@
                 const transaction = db.transaction([currentProfile], "readwrite");
                 const store = transaction.objectStore(currentProfile);
                 store.delete(markerId.toString());
+
+                // Remove from marker group as well
+                const markerConfig = markersConfig.find(m => m.type === marker.options.icon.options.iconUrl.split('marker-icon-')[1].split('.')[0]);
+                if (markerConfig) {
+                    markerGroups[markerConfig.type].removeLayer(marker);
+                }
                 map.removeLayer(marker);
             }
         }
@@ -393,7 +399,7 @@
                     if (markerConfig) {
                         var marker = L.marker([markerData.lat, markerData.lng], {icon: markerConfig.icon}).addTo(map);
                         marker.bindPopup('<b>' + markerConfig.description + '</b><br><button class="remove-marker-btn" onclick="removeMarker(\'' + marker._leaflet_id + '\')">Remove Marker</button>');
-                        markerConfig.group.addLayer(marker);
+                        markerGroups[markerConfig.type].addLayer(marker);
                     }
                 });
             };
@@ -403,7 +409,10 @@
         }
 
         function clearMarkers() {
-            Object.values(markerGroups).forEach(group => group.clearLayers());
+            Object.values(markerGroups).forEach(group => {
+                group.clearLayers();
+                group.addTo(map); // Ensure group is re-added to map after clearing
+            });
         }
 
         // Marker Description Management
@@ -427,8 +436,8 @@
                         markerConfig.description = desc.description;
                     }
                 });
-                generateLegend(); // Moved here to ensure descriptions are loaded
-                populateMarkerSelection(); // Moved here to ensure descriptions are loaded
+                generateLegend();
+                populateMarkerSelection();
             };
             request.onerror = function(event) {
                 console.error("Failed to load marker descriptions:", event.target.error);
@@ -483,7 +492,7 @@
                 map.removeLayer(markerGroups[type]);
                 document.querySelector(`.legend-item[data-type="${type}"]`).classList.add('hidden');
             } else {
-                markerGroups[type].addTo(map);
+                map.addLayer(markerGroups[type]);
                 document.querySelector(`.legend-item[data-type="${type}"]`).classList.remove('hidden');
             }
         }
