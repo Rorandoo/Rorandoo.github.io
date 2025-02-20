@@ -5,6 +5,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         html, body {
             height: 100%;
@@ -131,14 +133,33 @@
             border: 1px solid #555;
             border-radius: 3px;
         }
-        #new-profile-btn {
+        #new-profile-btn, #delete-profile-btn {
             background: #4CAF50;
             color: white;
             border: none;
             padding: 5px 10px;
             border-radius: 3px;
             cursor: pointer;
-            width: 100%;
+            width: 48%;
+            margin: 1%;
+            position: relative;
+        }
+        #delete-profile-btn {
+            background: #ff4d4d;
+        }
+        #new-profile-btn:hover::after, #delete-profile-btn:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 12px;
+            white-space: nowrap;
+            pointer-events: none;
         }
         @media (max-width: 768px) {
             #sidebar {
@@ -160,7 +181,10 @@
         <div id="profile-container">
             <label for="profile-select">Current Profile:</label>
             <select id="profile-select"></select>
-            <button id="new-profile-btn">New Profile</button>
+            <div style="display: flex; flex-wrap: wrap;">
+                <button id="new-profile-btn" data-tooltip="Create a new profile"><i class="fas fa-plus"></i> New</button>
+                <button id="delete-profile-btn" data-tooltip="Delete the current profile"><i class="fas fa-trash"></i> Delete</button>
+            </div>
         </div>
     </div>
     <div id="map"></div>
@@ -290,6 +314,7 @@
                 option.disabled = true;
                 select.appendChild(option);
             }
+            document.getElementById('delete-profile-btn').disabled = profiles.length === 0;
         }
 
         function switchProfile(profile) {
@@ -316,6 +341,41 @@
             ensureStoreExists(newProfile, function() {
                 switchProfile(newProfile);
             });
+        });
+
+        function deleteProfile(profile) {
+            if (!profile || !db.objectStoreNames.contains(profile)) return;
+            if (confirm(`Delete profile "${profile}"? This cannot be undone.`)) {
+                const currentVersion = db.version;
+                db.close();
+                const deleteRequest = indexedDB.open(dbName, currentVersion + 1);
+                deleteRequest.onupgradeneeded = function(event) {
+                    const upgradeDb = event.target.result;
+                    upgradeDb.deleteObjectStore(profile);
+                    upgradeDb.deleteObjectStore(profile + "_descriptions");
+                };
+                deleteRequest.onsuccess = function(event) {
+                    db = event.target.result;
+                    if (profile === currentProfile) {
+                        currentProfile = Array.from(db.objectStoreNames).find(name => !name.endsWith('_descriptions')) || null;
+                        localStorage.setItem('currentProfile', currentProfile || '');
+                        clearMarkers();
+                        if (currentProfile) {
+                            loadMarkers();
+                            loadMarkerDescriptions();
+                        }
+                    }
+                    updateProfileSelector();
+                };
+                deleteRequest.onerror = function(event) {
+                    console.error("Failed to delete profile:", event.target.error);
+                    alert("Failed to delete profile: " + event.target.error);
+                };
+            }
+        }
+
+        document.getElementById('delete-profile-btn').addEventListener('click', function() {
+            deleteProfile(currentProfile);
         });
 
         // Marker Management with IndexedDB
@@ -377,7 +437,6 @@
                 const store = transaction.objectStore(currentProfile);
                 store.delete(markerId.toString());
 
-                // Remove from marker group as well
                 const markerConfig = markersConfig.find(m => m.type === marker.options.icon.options.iconUrl.split('marker-icon-')[1].split('.')[0]);
                 if (markerConfig) {
                     markerGroups[markerConfig.type].removeLayer(marker);
@@ -411,7 +470,7 @@
         function clearMarkers() {
             Object.values(markerGroups).forEach(group => {
                 group.clearLayers();
-                group.addTo(map); // Ensure group is re-added to map after clearing
+                group.addTo(map);
             });
         }
 
@@ -520,7 +579,7 @@
         });
         map.addLayer(new gridLayer({ pane: 'gridPane' }));
 
-        // Coordinate update with no debounce and debugging
+        // Coordinate update with no debounce
         var coordinatesDiv = document.getElementById('coordinates');
         var lastUpdateTime = 0;
 
@@ -529,7 +588,6 @@
             var lng = Math.floor(e.latlng.lng);
             coordinatesDiv.innerHTML = 'Lat: ' + lat + ', Lng: ' + lng;
 
-            // Debugging: Log time between updates
             var now = performance.now();
             if (lastUpdateTime) {
                 console.log('Time since last update:', now - lastUpdateTime, 'ms');
