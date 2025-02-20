@@ -54,6 +54,7 @@
             align-items: center;
             margin-bottom: 10px;
             cursor: pointer;
+            transition: opacity 0.3s ease;
         }
         .legend-item.hidden {
             opacity: 0.5;
@@ -73,6 +74,7 @@
             z-index: 1000;
             display: none;
             width: 200px;
+            transition: opacity 0.2s ease;
         }
         #marker-selection label, #marker-selection select, #marker-selection button {
             display: block;
@@ -95,6 +97,15 @@
             border-radius: 3px;
             cursor: pointer;
         }
+        @media (max-width: 768px) {
+            #sidebar {
+                width: 200px;
+            }
+            #map {
+                width: calc(100% - 200px);
+                margin-left: 200px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -114,15 +125,23 @@
     </div>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
+        var imageBounds = [[-90, -180], [90, 180]];
         var map = L.map('map', {
-            doubleClickZoom: false
+            doubleClickZoom: false,
+            minZoom: 1,
+            maxZoom: 5,
+            maxBounds: imageBounds,
+            maxBoundsViscosity: 1.0
         }).setView([0, 0], 2);
 
         var markers = JSON.parse(localStorage.getItem('markers')) || [];
 
         var imageUrl = 'https://Rorandoo.github.io/Maps/Legacymap1.jpg';
-        var imageBounds = [[-90, -180], [90, 180]];
-        L.imageOverlay(imageUrl, imageBounds).addTo(map);
+        var imageOverlay = L.imageOverlay(imageUrl, imageBounds)
+            .on('error', function(e) {
+                console.error('Failed to load map image');
+            })
+            .addTo(map);
 
         // Marker Factory Function
         function createMarker(type, color, description) {
@@ -162,6 +181,10 @@
 
         // Function to add a marker
         function addMarker(lat, lng, markerConfig) {
+            if (!isFinite(lat) || !isFinite(lng)) {
+                console.error('Invalid coordinates:', lat, lng);
+                return;
+            }
             var marker = L.marker([lat, lng], {icon: markerConfig.icon}).addTo(map);
             marker.bindPopup('<b>' + markerConfig.description + '</b><br><button class="remove-marker-btn" onclick="removeMarker(' + marker._leaflet_id + ')">Remove Marker</button>');
 
@@ -230,13 +253,22 @@
         });
         map.addLayer(new gridLayer({ pane: 'gridPane' }));
 
-        // Update coordinates counter
+        // Debounced coordinate update
         var coordinatesDiv = document.getElementById('coordinates');
-        map.on('mousemove', function(e) {
+        var updateCoordinates = debounce(function(e) {
             var lat = Math.floor(e.latlng.lat);
             var lng = Math.floor(e.latlng.lng);
             coordinatesDiv.innerHTML = 'Lat: ' + lat + ', Lng: ' + lng;
-        });
+        }, 100);
+        map.on('mousemove', updateCoordinates);
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
 
         var selectedLatLng;
         var tempMarker;
