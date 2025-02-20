@@ -520,21 +520,23 @@
         });
         map.addLayer(new gridLayer({ pane: 'gridPane' }));
 
+        // Coordinate update with no debounce and debugging
         var coordinatesDiv = document.getElementById('coordinates');
-        var updateCoordinates = debounce(function(e) {
+        var lastUpdateTime = 0;
+
+        function updateCoordinates(e) {
             var lat = Math.floor(e.latlng.lat);
             var lng = Math.floor(e.latlng.lng);
             coordinatesDiv.innerHTML = 'Lat: ' + lat + ', Lng: ' + lng;
-        }, 100);
-        map.on('mousemove', updateCoordinates);
 
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), wait);
-            };
+            // Debugging: Log time between updates
+            var now = performance.now();
+            if (lastUpdateTime) {
+                console.log('Time since last update:', now - lastUpdateTime, 'ms');
+            }
+            lastUpdateTime = now;
         }
+        map.on('mousemove', updateCoordinates);
 
         var selectedLatLng;
         var tempMarker;
