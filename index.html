@@ -23,6 +23,8 @@
             box-sizing: border-box;
             font-family: Arial, sans-serif;
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
         #map {
             height: 100%;
@@ -65,6 +67,19 @@
             background-size: contain;
             margin-right: 10px;
         }
+        .legend-text {
+            flex-grow: 1;
+        }
+        .edit-btn {
+            background: #666;
+            color: white;
+            border: none;
+            padding: 2px 5px;
+            margin-left: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
         #marker-selection {
             position: absolute;
             background: rgba(51, 51, 51, 0.9);
@@ -97,6 +112,34 @@
             border-radius: 3px;
             cursor: pointer;
         }
+        #sidebar-content {
+            flex: 1 1 auto;
+        }
+        #profile-container {
+            padding-top: 20px;
+        }
+        #profile-container label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        #profile-select {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 10px;
+            background: #444;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 3px;
+        }
+        #new-profile-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            width: 100%;
+        }
         @media (max-width: 768px) {
             #sidebar {
                 width: 200px;
@@ -110,8 +153,15 @@
 </head>
 <body>
     <div id="sidebar">
-        <h2>Legacy: Steel & Sorcery</h2>
-        <h3>Greenwood</h3>
+        <div id="sidebar-content">
+            <h2>Legacy: Steel & Sorcery</h2>
+            <h3>Greenwood</h3>
+        </div>
+        <div id="profile-container">
+            <label for="profile-select">Current Profile:</label>
+            <select id="profile-select"></select>
+            <button id="new-profile-btn">New Profile</button>
+        </div>
     </div>
     <div id="map"></div>
     <div id="coordinates">Lat: 0, Lng: 0</div>
@@ -125,6 +175,40 @@
     </div>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
+        // IndexedDB Setup
+        const dbName = "LegacyMapDB";
+        let db;
+        let currentProfile = localStorage.getItem('currentProfile') || null;
+
+        const initialRequest = indexedDB.open(dbName);
+        initialRequest.onerror = function(event) {
+            console.error("IndexedDB error:", event.target.error);
+            alert("Failed to initialize database: " + event.target.error);
+        };
+        initialRequest.onsuccess = function(event) {
+            db = event.target.result;
+            if (!currentProfile && db.objectStoreNames.length > 0) {
+                currentProfile = db.objectStoreNames[0];
+            }
+            if (!currentProfile) {
+                currentProfile = promptForProfileName();
+                ensureStoreExists(currentProfile, function() {
+                    localStorage.setItem('currentProfile', currentProfile);
+                    updateProfileSelector();
+                    loadMarkers();
+                    loadMarkerDescriptions();
+                });
+            } else {
+                localStorage.setItem('currentProfile', currentProfile);
+                updateProfileSelector();
+                loadMarkers();
+                loadMarkerDescriptions();
+            }
+        };
+        initialRequest.onupgradeneeded = function(event) {
+            db = event.target.result;
+        };
+
         var imageBounds = [[-90, -180], [90, 180]];
         var map = L.map('map', {
             doubleClickZoom: false,
@@ -134,7 +218,7 @@
             maxBoundsViscosity: 1.0
         }).setView([0, 0], 2);
 
-        var markers = JSON.parse(localStorage.getItem('markers')) || [];
+        map.getPane('markerPane').style.zIndex = 700;
 
         var imageUrl = 'https://Rorandoo.github.io/Maps/Legacymap1.jpg';
         var imageOverlay = L.imageOverlay(imageUrl, imageBounds)
@@ -160,7 +244,6 @@
             };
         }
 
-        // Marker Configuration
         var markersConfig = [
             createMarker("red", "red", "Loot Container"),
             createMarker("blue", "blue", "Ore - Copper/Iron/Bloodsteel"),
@@ -172,42 +255,224 @@
             createMarker("black", "black", "Black")
         ];
 
-        // Initialize Marker Groups
         var markerGroups = {};
         markersConfig.forEach(marker => {
             markerGroups[marker.type] = marker.group;
             marker.group.addTo(map);
         });
 
-        // Function to add a marker
+        // Profile Management
+        function promptForProfileName() {
+            let name = prompt('Enter profile name:');
+            while (!name || name.trim() === '') {
+                alert('Profile name cannot be empty!');
+                name = prompt('Enter profile name:');
+            }
+            return name.trim();
+        }
+
+        function updateProfileSelector() {
+            const select = document.getElementById('profile-select');
+            select.innerHTML = '';
+            const profiles = Array.from(db.objectStoreNames).filter(name => !name.endsWith('_descriptions'));
+            profiles.forEach(profile => {
+                const option = document.createElement('option');
+                option.value = profile;
+                option.textContent = profile;
+                if (profile === currentProfile) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+            if (profiles.length === 0) {
+                const option = document.createElement('option');
+                option.textContent = 'No profiles yet';
+                option.disabled = true;
+                select.appendChild(option);
+            }
+        }
+
+        function switchProfile(profile) {
+            if (profile && profile !== currentProfile) {
+                currentProfile = profile;
+                localStorage.setItem('currentProfile', currentProfile);
+                clearMarkers();
+                loadMarkers();
+                loadMarkerDescriptions();
+                updateProfileSelector();
+            }
+        }
+
+        document.getElementById('profile-select').addEventListener('change', function() {
+            switchProfile(this.value);
+        });
+
+        document.getElementById('new-profile-btn').addEventListener('click', function() {
+            const newProfile = promptForProfileName();
+            if (db.objectStoreNames.contains(newProfile)) {
+                alert('Profile already exists!');
+                return;
+            }
+            ensureStoreExists(newProfile, function() {
+                switchProfile(newProfile);
+            });
+        });
+
+        // Marker Management with IndexedDB
+        function ensureStoreExists(profile, callback) {
+            if (!db.objectStoreNames.contains(profile)) {
+                const currentVersion = db.version;
+                db.close();
+                const upgradeRequest = indexedDB.open(dbName, currentVersion + 1);
+                upgradeRequest.onupgradeneeded = function(event) {
+                    const upgradeDb = event.target.result;
+                    const store = upgradeDb.createObjectStore(profile, { keyPath: "id" });
+                    store.createIndex("lat", "lat", { unique: false });
+                    store.createIndex("lng", "lng", { unique: false });
+                    store.createIndex("type", "type", { unique: false });
+                    if (!upgradeDb.objectStoreNames.contains(profile + "_descriptions")) {
+                        upgradeDb.createObjectStore(profile + "_descriptions", { keyPath: "type" });
+                    }
+                };
+                upgradeRequest.onsuccess = function(event) {
+                    db = event.target.result;
+                    if (callback) callback();
+                };
+                upgradeRequest.onerror = function(event) {
+                    console.error("Failed to create profile store:", event.target.error);
+                    alert("Failed to create profile: " + event.target.error);
+                };
+            } else if (callback) {
+                callback();
+            }
+        }
+
         function addMarker(lat, lng, markerConfig) {
             if (!isFinite(lat) || !isFinite(lng)) {
                 console.error('Invalid coordinates:', lat, lng);
                 return;
             }
             var marker = L.marker([lat, lng], {icon: markerConfig.icon}).addTo(map);
-            marker.bindPopup('<b>' + markerConfig.description + '</b><br><button class="remove-marker-btn" onclick="removeMarker(' + marker._leaflet_id + ')">Remove Marker</button>');
-
+            marker.bindPopup('<b>' + markerConfig.description + '</b><br><button class="remove-marker-btn" onclick="removeMarker(\'' + marker._leaflet_id + '\')">Remove Marker</button>');
             markerConfig.group.addLayer(marker);
 
-            markers.push({ lat: lat, lng: lng, type: markerConfig.type });
-            localStorage.setItem('markers', JSON.stringify(markers));
+            ensureStoreExists(currentProfile);
+            const transaction = db.transaction([currentProfile], "readwrite");
+            const store = transaction.objectStore(currentProfile);
+            store.add({
+                id: marker._leaflet_id.toString(),
+                lat: lat,
+                lng: lng,
+                type: markerConfig.type
+            });
+
             return marker;
+        }
+
+        function removeMarker(markerId) {
+            var marker = map._layers[markerId];
+            if (marker) {
+                ensureStoreExists(currentProfile);
+                const transaction = db.transaction([currentProfile], "readwrite");
+                const store = transaction.objectStore(currentProfile);
+                store.delete(markerId.toString());
+                map.removeLayer(marker);
+            }
+        }
+
+        function loadMarkers() {
+            ensureStoreExists(currentProfile);
+            const transaction = db.transaction([currentProfile], "readonly");
+            const store = transaction.objectStore(currentProfile);
+            const request = store.getAll();
+            request.onsuccess = function(event) {
+                const markers = event.target.result || [];
+                clearMarkers();
+                markers.forEach(markerData => {
+                    const markerConfig = markersConfig.find(m => m.type === markerData.type);
+                    if (markerConfig) {
+                        var marker = L.marker([markerData.lat, markerData.lng], {icon: markerConfig.icon}).addTo(map);
+                        marker.bindPopup('<b>' + markerConfig.description + '</b><br><button class="remove-marker-btn" onclick="removeMarker(\'' + marker._leaflet_id + '\')">Remove Marker</button>');
+                        markerConfig.group.addLayer(marker);
+                    }
+                });
+            };
+            request.onerror = function(event) {
+                console.error("Failed to load markers:", event.target.error);
+            };
+        }
+
+        function clearMarkers() {
+            Object.values(markerGroups).forEach(group => group.clearLayers());
+        }
+
+        // Marker Description Management
+        function saveMarkerDescription(type, description) {
+            ensureStoreExists(currentProfile);
+            const transaction = db.transaction([currentProfile + "_descriptions"], "readwrite");
+            const store = transaction.objectStore(currentProfile + "_descriptions");
+            store.put({ type: type, description: description });
+        }
+
+        function loadMarkerDescriptions() {
+            ensureStoreExists(currentProfile);
+            const transaction = db.transaction([currentProfile + "_descriptions"], "readonly");
+            const store = transaction.objectStore(currentProfile + "_descriptions");
+            const request = store.getAll();
+            request.onsuccess = function(event) {
+                const descriptions = event.target.result || [];
+                descriptions.forEach(desc => {
+                    const markerConfig = markersConfig.find(m => m.type === desc.type);
+                    if (markerConfig) {
+                        markerConfig.description = desc.description;
+                    }
+                });
+                generateLegend(); // Moved here to ensure descriptions are loaded
+                populateMarkerSelection(); // Moved here to ensure descriptions are loaded
+            };
+            request.onerror = function(event) {
+                console.error("Failed to load marker descriptions:", event.target.error);
+            };
+        }
+
+        function renameMarker(type) {
+            const newName = prompt('Enter new name for this marker:', markersConfig.find(m => m.type === type).description);
+            if (newName && newName.trim() !== '') {
+                const markerConfig = markersConfig.find(m => m.type === type);
+                markerConfig.description = newName.trim();
+                saveMarkerDescription(type, newName.trim());
+                updateAllMarkerPopups(type);
+                generateLegend();
+                populateMarkerSelection();
+            }
+        }
+
+        function updateAllMarkerPopups(type) {
+            const markerConfig = markersConfig.find(m => m.type === type);
+            markerGroups[type].eachLayer(marker => {
+                marker.setPopupContent('<b>' + markerConfig.description + '</b><br><button class="remove-marker-btn" onclick="removeMarker(\'' + marker._leaflet_id + '\')">Remove Marker</button>');
+            });
         }
 
         // Generate Legend
         function generateLegend() {
-            var legendContainer = document.getElementById('sidebar');
+            var legendContainer = document.getElementById('sidebar-content');
+            const existingItems = legendContainer.querySelectorAll('.legend-item');
+            existingItems.forEach(item => item.remove());
             markersConfig.forEach(marker => {
                 var item = document.createElement('div');
                 item.className = 'legend-item';
                 item.setAttribute('data-type', marker.type);
                 item.innerHTML = `
                     <div class="legend-icon" style="background-image: url('${marker.icon.options.iconUrl}');"></div>
-                    <span>${marker.description}</span>
+                    <span class="legend-text">${marker.description}</span>
+                    <button class="edit-btn">Edit</button>
                 `;
-                item.addEventListener('click', function() {
+                item.querySelector('.legend-text').addEventListener('click', function() {
                     toggleMarkerVisibility(marker.type);
+                });
+                item.querySelector('.edit-btn').addEventListener('click', function() {
+                    renameMarker(marker.type);
                 });
                 legendContainer.appendChild(item);
             });
@@ -223,9 +488,9 @@
             }
         }
 
-        // Populate Marker Selection Dropdown
         function populateMarkerSelection() {
             var select = document.getElementById('marker-type');
+            select.innerHTML = '';
             markersConfig.forEach(marker => {
                 var option = document.createElement('option');
                 option.value = marker.type;
@@ -234,26 +499,18 @@
             });
         }
 
-        // Load markers from local storage
-        markers.forEach(function(markerData) {
-            var markerConfig = markersConfig.find(m => m.type === markerData.type);
-            if (markerConfig) {
-                addMarker(markerData.lat, markerData.lng, markerConfig);
-            }
-        });
-
-        // Create grid overlay
+        // Grid overlay
         map.createPane('gridPane');
         map.getPane('gridPane').style.zIndex = 650;
         var gridLayer = L.GridLayer.extend({
-            createTile: function (coords) {
+            createTile: function(coords) {
                 var tile = L.DomUtil.create('div', 'grid-tile');
+                tile.style.outline = '1px solid #000000';
                 return tile;
             }
         });
         map.addLayer(new gridLayer({ pane: 'gridPane' }));
 
-        // Debounced coordinate update
         var coordinatesDiv = document.getElementById('coordinates');
         var updateCoordinates = debounce(function(e) {
             var lat = Math.floor(e.latlng.lat);
@@ -305,23 +562,7 @@
             document.getElementById('marker-selection').style.display = 'none';
         });
 
-        window.removeMarker = function(markerId) {
-            var marker = map._layers[markerId];
-            if (marker) {
-                var lat = marker.getLatLng().lat;
-                var lng = marker.getLatLng().lng;
-
-                markers = markers.filter(function(m) {
-                    return m.lat !== lat || m.lng !== lng;
-                });
-                localStorage.setItem('markers', JSON.stringify(markers));
-
-                map.removeLayer(marker);
-            }
-        };
-
-        generateLegend();
-        populateMarkerSelection();
+        window.removeMarker = removeMarker;
     </script>
 </body>
 </html>
